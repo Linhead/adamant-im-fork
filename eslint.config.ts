@@ -2,6 +2,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat'
+import type { Plugin } from '@eslint/core'
 import { FlatCompat } from '@eslint/eslintrc'
 import js from '@eslint/js'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
@@ -11,6 +12,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
 import vueParser from 'vue-eslint-parser'
 import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
+import eslintPluginSecurity from 'eslint-plugin-security'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -29,7 +31,8 @@ export default defineConfig([
     compat.extends(
       'plugin:@typescript-eslint/recommended',
       'plugin:import/recommended',
-      'plugin:import/typescript'
+      'plugin:import/typescript',
+      'plugin:security/recommended-legacy'
     )
   ),
 
@@ -51,7 +54,8 @@ export default defineConfig([
     },
     plugins: {
       // Manual registration is required only for plugins not covered by spreads above
-      '@typescript-eslint': fixupPluginRules(typescriptEslint as any)
+      '@typescript-eslint': fixupPluginRules(typescriptEslint as Plugin),
+      security: fixupPluginRules(eslintPluginSecurity as unknown as Plugin)
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
