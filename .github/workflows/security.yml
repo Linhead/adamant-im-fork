@@ -1,0 +1,61 @@
+name: Security SAST
+
+on:
+  pull_request:
+    types:
+      - opened
+      - ready_for_review
+      - reopened
+      - synchronize
+  push:
+    branches:
+      - dev
+      - master
+  workflow_dispatch:
+
+# @see https://typicode.github.io/husky/how-to.html#ci-server-and-docker
+env:
+  HUSKY: 0
+
+jobs:
+  sast:
+    name: Run SAST analysis with Semgrep
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload SARIF results to GitHub Security tab
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout repository 🛎️
+        uses: actions/checkout@v4
+
+      - name: Install Semgrep 🔧
+        run: pip install semgrep
+
+      - name: Run Semgrep SAST scan 🛡️
+        run: |
+          semgrep scan \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/vue \
+            --config p/owasp-top-ten \
+            --config p/secrets \
+            --sarif \
+            --output semgrep.sarif \
+            --metrics=off \
+            --severity WARNING \
+            --severity ERROR \
+          || SEMGREP_EXIT=$?
+          # Exit code 7 = findings found, not an error — treat as success
+          if [ "${SEMGREP_EXIT}" != "0" ] && [ "${SEMGREP_EXIT}" != "7" ]; then
+            exit $SEMGREP_EXIT
+          fi
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Upload SARIF report to GitHub Security tab 📊
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: semgrep.sarif

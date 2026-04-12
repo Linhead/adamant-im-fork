@@ -54,7 +54,7 @@ export default defineConfig([
     },
     plugins: {
       // Manual registration is required only for plugins not covered by spreads above
-      '@typescript-eslint': fixupPluginRules(typescriptEslint as Plugin),
+      '@typescript-eslint': fixupPluginRules(typescriptEslint as unknown as Plugin),
       security: fixupPluginRules(eslintPluginSecurity as unknown as Plugin)
     },
     rules: {
